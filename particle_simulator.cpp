@@ -128,6 +128,6 @@ public:
 
 int main(){
     simulation A;
-    A.generate_particles(3);
+    A.generate_particles(2);
     A.play();
 }
