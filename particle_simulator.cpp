@@ -1,20 +1,21 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-#define dt 0.0001
-#define gravity make_pair(0.0, -9.7829)
-#define boundary make_pair(10.0, 100.0)
-#define CoE 0.5
+#define dt 0.000001
+#define gravity make_pair(0.0, 0.0)
+#define boundary make_pair(10.0, 10000000.0)
+#define CoE 1
 float time_ = 0;
 
 float min(float a, float b){
     return (a > b) ? b : a;
 }
 
+int collisions = 0;
 
 class particle{
 protected:
-    float mass;
+    float mass = 1;
     float radius = 0.1;
     pair<float, float> acceleration;
     pair<float, float> velocity;
@@ -40,6 +41,7 @@ protected:
     }
     void collide_boundary(){
         if(position.first < 0 || position.first > boundary.first){
+            collisions++;
             double gap = abs(min(prev_position.first,  boundary.first - prev_position.first));
             double delta = ((abs(velocity.first) * dt) - gap) * CoE;
             if(position.first < 0){
@@ -50,6 +52,7 @@ protected:
             velocity.first = -1 * CoE * velocity.first; 
         }
         if(position.second < 0 || position.second > boundary.second){
+            collisions++;
             float gap = abs(min(prev_position.second,  boundary.second - prev_position.second));
             float delta = ((abs(velocity.second) * dt) - gap) * CoE;
             if(position.second < 0){
@@ -61,15 +64,16 @@ protected:
         }
     }
     void collide_particle(particle &B){
-        cout << "collided" <<endl;
+        //cout << "collided" <<endl;
+        collisions++;
         pair<float, float> prev_velocity = velocity;
-        velocity.first = ((velocity.first*(1 - CoE) + B.velocity.first*(1 + CoE))) / 2;
-        velocity.second = ((velocity.second*(1 - CoE) + B.velocity.second*(1 + CoE))) / 2;
+        pair<float, float> velocity_cm = make_pair(((mass*velocity.first + B.mass*B.velocity.first)/(mass + B.mass)), ((mass*velocity.second + B.mass*B.velocity.second)/(mass + B.mass)));
+        velocity.first = velocity_cm.first - (((B.mass*CoE)/(mass + B.mass))*(velocity.first - B.velocity.first));
+        velocity.second = velocity_cm.second - (((B.mass*CoE)/(mass + B.mass))*(velocity.second - B.velocity.second));
 
-        B.velocity.first = ((prev_velocity.first*(1 + CoE) + B.velocity.first*(1 - CoE))) / 2;
-        B.velocity.second = ((prev_velocity.second*(1 + CoE) + B.velocity.second*(1 - CoE))) / 2;
+        B.velocity.first = velocity_cm.first + (((mass*CoE)/(mass + B.mass))*(prev_velocity.first - B.velocity.first));
+        B.velocity.second = velocity_cm.second + (((mass*CoE)/(mass + B.mass))*(prev_velocity.second - B.velocity.second));
     }
-
     particle(pair<float, float> p){
         position = p;
     }
@@ -88,6 +92,19 @@ protected:
 class simulation{
     vector<particle> particles;
 public:
+
+    void generate_case(){
+        particle A(make_pair(5, 5));
+        A.mass = 10000000;
+        A.velocity = make_pair(0, -1);
+        particle B(make_pair(5, 2));
+        B.mass = 1;
+        B.velocity = make_pair(0, 0); 
+        particles.clear();
+        particles.push_back(A);
+        particles.push_back(B);
+    }
+
     void generate_particles(int n){
         for(int i = 0; i < n; i++){
             particle A(make_pair(5, i+4));
@@ -112,6 +129,7 @@ public:
         time_ += dt;
     }
     void print_position(){
+        cout << collisions <<" ";
         cout << time_ <<" ";
         for(auto p: particles){
             cout << p.position.first <<" "<<p.position.second <<" ";
@@ -121,13 +139,15 @@ public:
     void play(){
         while(1){
             simulate();
-            print_position();
+            if(int(time_*100000) % 5 == 0){
+                cout << collisions <<endl; 
+            }
         }
     }
 };
 
 int main(){
     simulation A;
-    A.generate_particles(2);
+    A.generate_case();
     A.play();
 }
