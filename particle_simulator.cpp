@@ -1,10 +1,10 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-#define dt 0.000001
-#define gravity make_pair(0.0, 0.0)
+#define dt 0.0001
+#define gravity make_pair(0.0, -10.0)
 #define boundary make_pair(10.0, 10000000.0)
-#define CoE 1
+#define CoE 0.5
 float time_ = 0;
 
 float min(float a, float b){
@@ -40,25 +40,25 @@ protected:
         collide_boundary();
     }
     void collide_boundary(){
-        if(position.first < 0 || position.first > boundary.first){
+        if(position.first < radius || position.first > boundary.first - radius){
             collisions++;
-            double gap = abs(min(prev_position.first,  boundary.first - prev_position.first));
-            double delta = ((abs(velocity.first) * dt) - gap) * CoE;
-            if(position.first < 0){
-                position.first = delta;
+            float gap = abs(min(radius - prev_position.first ,  boundary.first - radius - prev_position.first));
+            float delta = ((abs(velocity.first) * dt) - gap) * CoE;
+            if(position.first < radius){
+                position.first = radius + delta;
             }else{
-                position.first = (boundary.first - delta);
+                position.first = (boundary.first - radius - delta);
             }
             velocity.first = -1 * CoE * velocity.first; 
         }
-        if(position.second < 0 || position.second > boundary.second){
+        if(position.second < radius || position.second > boundary.second - radius){
             collisions++;
-            float gap = abs(min(prev_position.second,  boundary.second - prev_position.second));
+            float gap = abs(min(radius - prev_position.second,  boundary.second - radius - prev_position.second));
             float delta = ((abs(velocity.second) * dt) - gap) * CoE;
-            if(position.second < 0){
-                position.second = delta;
+            if(position.second < radius){
+                position.second = radius + delta;
             }else{
-                position.second = (boundary.second - delta);
+                position.second = (boundary.second - radius - delta);
             }
             velocity.second = -1 * CoE * velocity.second; 
         }
@@ -95,7 +95,7 @@ public:
 
     void generate_case(){
         particle A(make_pair(5, 5));
-        A.mass = 10000000;
+        A.mass = 1000;
         A.velocity = make_pair(0, -1);
         particle B(make_pair(5, 2));
         B.mass = 1;
@@ -116,6 +116,10 @@ public:
         vector<particle>::iterator it_ = particles.begin();
         while(it != particles.end()){
             it -> move();
+            it++;
+        }
+        it = particles.begin();
+        while(it != particles.end()){
             it_++;
             while(it_ != particles.end()){
                 if(it -> distance(*it_) <= 2*it->radius){
@@ -139,15 +143,13 @@ public:
     void play(){
         while(1){
             simulate();
-            if(int(time_*100000) % 5 == 0){
-                cout << collisions <<endl; 
-            }
+            print_position();
         }
     }
 };
 
 int main(){
     simulation A;
-    A.generate_case();
+    A.generate_particles(2);
     A.play();
 }
